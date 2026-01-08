@@ -1,2 +1,2 @@
 # nr-brmb-pit-msg-queue
-Hosts OpenShift Namespaces for NATS for PIT Claims project
+Hosts Message Queue for PIT Microservices
