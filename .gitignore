@@ -1,0 +1,4 @@
+client/src/main/resources/msg-queue-dev.properties
+client/.classpath
+client/.project
+client/.settings/
