@@ -1,8 +1,10 @@
 package ca.bc.gov.mal.pit.msg.queue.example;
 
+import io.nats.client.AuthHandler;
 import io.nats.client.Connection;
 import io.nats.client.JetStream;
 import io.nats.client.Message;
+import io.nats.client.NKey;
 import io.nats.client.Nats;
 import io.nats.client.Options;
 import io.nats.client.api.PublishAck;
@@ -12,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.Properties;
 
@@ -27,24 +30,54 @@ public class NatsPublish {
 			props.load(ins);
 			
 			String server = props.getProperty("msg.queue.server");
-			String userName = props.getProperty("msg.queue.publisher.user");
-			String password = props.getProperty("msg.queue.publisher.password");
+//			String userName = props.getProperty("msg.queue.publisher.user");
+//			String password = props.getProperty("msg.queue.publisher.password");
+			String seed = props.getProperty("msg.queue.publisher.nkey.seed");
 			String subject = props.getProperty("msg.queue.subject");
 
-			if ( server == null || userName == null || password == null || subject == null ) {
+			if ( server == null || subject == null || seed == null ) {
 				throw new IllegalArgumentException("Required property is missing");
 			}
 
-			String data = "Testing, testing, 4, 5, 6";
+			String data = "Testing, testing, 7, 8, 9";
 
 	        System.out.printf("\nPublishing to %s. Server is %s\n\n", subject, server);
-		
+
+	        AuthHandler authHandler = new AuthHandler() {
+				
+	            private final NKey nkey = NKey.fromSeed(seed.toCharArray());
+
+	            @Override
+				public byte[] sign(byte[] nonce) {
+	                try {
+	                    return this.nkey.sign(nonce);
+	                } catch (GeneralSecurityException|IOException|NullPointerException ex) {
+	                    return null;
+	                }
+				}
+				
+				@Override
+				public char[] getJWT() {
+					return null;
+				}
+				
+				@Override
+				public char[] getID() {
+			        try {
+			            return this.nkey.getPublicKey();
+			        } catch (GeneralSecurityException|IOException|NullPointerException ex) {
+			            return null;
+			        }
+				}
+			};
+	        
 	        Options.Builder builder = new Options.Builder()
 	                .server(server)
 	                .connectionTimeout(Duration.ofSeconds(5))
 	                .pingInterval(Duration.ofSeconds(10))
 	                .reconnectWait(Duration.ofSeconds(1))
-	                .userInfo(userName, password)
+//	                .userInfo(userName, password)
+	                .authHandler(authHandler)
 	// TODO: Do we need this?
 	//                .connectionListener(null)
 	//                .errorListener(el);
