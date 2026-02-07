@@ -2,13 +2,18 @@ package ca.bc.gov.mal.pit.msg.queue.example;
 
 import io.nats.client.AuthHandler;
 import io.nats.client.Connection;
+import io.nats.client.ConnectionListener;
+import io.nats.client.Consumer;
+import io.nats.client.ErrorListener;
 import io.nats.client.JetStream;
+import io.nats.client.JetStreamSubscription;
 import io.nats.client.Message;
 import io.nats.client.NKey;
 import io.nats.client.Nats;
 import io.nats.client.Options;
 import io.nats.client.api.PublishAck;
 import io.nats.client.impl.NatsMessage;
+import io.nats.client.support.Status;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -22,16 +27,15 @@ public class NatsPublish {
 
 	public static void main(String[] args) {
 
+		InputStream ins = null;
 		try {
 			ClassLoader cl = Thread.currentThread().getContextClassLoader();
-			InputStream ins = cl.getResourceAsStream("msg-queue-dev.properties");
+			ins = cl.getResourceAsStream("msg-queue-dev.properties");
 			
 			Properties props = new Properties();
 			props.load(ins);
 			
 			String server = props.getProperty("msg.queue.server");
-//			String userName = props.getProperty("msg.queue.publisher.user");
-//			String password = props.getProperty("msg.queue.publisher.password");
 			String seed = props.getProperty("msg.queue.publisher.nkey.seed");
 			String subject = props.getProperty("msg.queue.subject");
 
@@ -39,7 +43,7 @@ public class NatsPublish {
 				throw new IllegalArgumentException("Required property is missing");
 			}
 
-			String data = "Testing, testing, 7, 8, 9";
+			String data = "Testing, testing, 10, 11, 12";
 
 	        System.out.printf("\nPublishing to %s. Server is %s\n\n", subject, server);
 
@@ -70,17 +74,80 @@ public class NatsPublish {
 			        }
 				}
 			};
-	        
+
+			ConnectionListener connListener = new ConnectionListener() {
+				@Override
+				public void connectionEvent(Connection conn, Events type) {
+					System.out.println("Connection Event: " + type);
+				}
+				
+				@Override
+				public void connectionEvent(Connection conn, Events type, Long time, String uriDetails) {
+					System.out.println("Connection Event: " + type + ", URI: " + uriDetails);
+				}
+			};
+			
+			ErrorListener errListener = new ErrorListener() {
+
+				@Override
+				public void errorOccurred(Connection conn, String error) {
+					System.out.println(supplyMessage("errorOccurred", conn, null, null, "Error: ", error));
+				}
+
+				@Override
+				public void exceptionOccurred(Connection conn, Exception exp) {
+					System.out.println(supplyMessage("exceptionOccurred", conn, null, null, "Exception: ", exp));
+				}
+
+				@Override
+				public void flowControlProcessed(Connection conn, JetStreamSubscription sub, String subject, FlowControlSource source) {
+					System.out.println(supplyMessage("flowControlProcessed", conn, null, sub, "Subject:", subject, "FlowControlSource:", source));
+				}
+
+				@Override
+				public void heartbeatAlarm(Connection conn, JetStreamSubscription sub, long lastStreamSequence, long lastConsumerSequence) {
+					System.out.println(supplyMessage("heartbeatAlarm", conn, null, sub, "lastStreamSequence: ", lastStreamSequence, "lastConsumerSequence: ", lastConsumerSequence));
+				}
+				
+				@Override
+				public void messageDiscarded(Connection conn, Message msg) {
+					System.out.println(supplyMessage("messageDiscarded", conn, null, null, "Message: ", msg));
+				}
+
+				@Override
+				public void pullStatusError(Connection conn, JetStreamSubscription sub, Status status) {
+					System.out.println(supplyMessage("pullStatusError", conn, null, sub, "Status:", status));
+				}
+				
+				@Override
+				public void pullStatusWarning(Connection conn, JetStreamSubscription sub, Status status) {
+					System.out.println(supplyMessage("pullStatusWarning", conn, null, sub, "Status:", status));
+				}
+				
+				@Override
+				public void slowConsumerDetected(Connection conn, Consumer consumer) {
+					System.out.println(supplyMessage("slowConsumerDetected", conn, consumer, null));
+				}
+
+				@Override
+				public void socketWriteTimeout(Connection conn) {
+					System.out.println(supplyMessage("socketWriteTimeout", conn, null, null));
+				}
+
+				@Override
+				public void unhandledStatus(Connection conn, JetStreamSubscription sub, Status status) {
+					System.out.println(supplyMessage("unhandledStatus", conn, null, sub, "Status:", status));
+				}
+			};			
+			
 	        Options.Builder builder = new Options.Builder()
 	                .server(server)
 	                .connectionTimeout(Duration.ofSeconds(5))
 	                .pingInterval(Duration.ofSeconds(10))
 	                .reconnectWait(Duration.ofSeconds(1))
-//	                .userInfo(userName, password)
 	                .authHandler(authHandler)
-	// TODO: Do we need this?
-	//                .connectionListener(null)
-	//                .errorListener(el);
+	                .connectionListener(connListener)
+	                .errorListener(errListener)
 	                .maxReconnects(-1);
 			
 	        Options options = builder.build();
@@ -94,23 +161,29 @@ public class NatsPublish {
 	                    .data(data, StandardCharsets.UTF_8)
 	                    .build();
 
-	            // TODO: Might need better error handling here. Docs suggest you need to manaully check for
-	            // errors.
 	            PublishAck pa = js.publish(msg);
 	            System.out.printf("Published message %s on subject %s, stream %s, seqno %d, has error %s. \n",
 	                   data, subject, pa.getStream(), pa.getSeqno(), pa.hasError() ? "Yes" : "No");
 
-	            // TODO: Do we need this?
+	            // TODO: Is this needed?
 	            nc.close();
 	        } catch (Exception e) {
 	                e.printStackTrace();
 	        }
 
-	        ins.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if ( ins != null ) {
+					ins.close();
+					ins = null;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
 	}
