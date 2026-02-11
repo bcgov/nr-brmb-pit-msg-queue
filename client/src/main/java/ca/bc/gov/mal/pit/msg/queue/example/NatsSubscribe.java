@@ -20,6 +20,7 @@ import io.nats.client.support.Status;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
@@ -147,9 +148,9 @@ public class NatsSubscribe {
 			
 	        Options.Builder builder = new Options.Builder()
 	                .server(server)
-	                .connectionTimeout(Duration.ofSeconds(5))
-	                .pingInterval(Duration.ofSeconds(10))
-	                .reconnectWait(Duration.ofSeconds(1))
+	                .connectionTimeout(Duration.ofSeconds(10))
+	                .pingInterval(Duration.ofSeconds(30))
+	                .reconnectWait(Duration.ofSeconds(5))
 	                .authHandler(authHandler)
 	                .connectionListener(connListener)
 	                .errorListener(errListener)
@@ -165,6 +166,7 @@ public class NatsSubscribe {
 //	            ConsumerConfiguration cc = ConsumerConfiguration.builder()
 //	                    .ackWait(Duration.ofMillis(2500))
 //	                    .build();
+	            
 	            PullSubscribeOptions pullOptions = PullSubscribeOptions.builder()
 	                    .durable(consumer)
 	                    .stream(subject)
@@ -174,13 +176,35 @@ public class NatsSubscribe {
 
 	            JetStreamSubscription sub = js.subscribe(null, pullOptions);
 
-	            nc.flush(Duration.ofSeconds(1));
+	            nc.flush(Duration.ofSeconds(5));
 
                 List<Message> messageList = sub.fetch(1, Duration.ofSeconds(1));
                 if ( messageList != null && !messageList.isEmpty() ) {
                 	Message msg = messageList.get(0);
                 	System.out.println("Received message for " + subject + ": " + msg);
-                	msg.ack();
+
+                	String dataStr = "Empty";
+                    if (msg.getData().length > 0) {
+                    	dataStr = new String(msg.getData(), StandardCharsets.UTF_8);
+                    }
+                	
+                	System.out.println("Data: " + dataStr);
+
+                	if ( msg.hasHeaders() ) {
+                		System.out.println("Headers: " + msg.getHeaders().toString());
+                	}
+
+                	if (msg.isStatusMessage() ) {
+                		System.out.println("Status: " + msg.getStatus().toString());
+                	}
+
+                	boolean messageProcessed = true;
+                	if (messageProcessed ) {
+                		msg.ack();
+                	} else {
+                		// Message cannot be processed at this time, so tell NATS to re-deliver this message, waiting at least X seconds.
+                		msg.nakWithDelay(Duration.ofSeconds(60));  // TODO: Change.
+                	}
                 } else {
                 	System.out.println("Nothing received");
                 }

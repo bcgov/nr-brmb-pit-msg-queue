@@ -142,9 +142,9 @@ public class NatsPublish {
 			
 	        Options.Builder builder = new Options.Builder()
 	                .server(server)
-	                .connectionTimeout(Duration.ofSeconds(5))
-	                .pingInterval(Duration.ofSeconds(10))
-	                .reconnectWait(Duration.ofSeconds(1))
+	                .connectionTimeout(Duration.ofSeconds(10))
+	                .pingInterval(Duration.ofSeconds(30))
+	                .reconnectWait(Duration.ofSeconds(5))
 	                .authHandler(authHandler)
 	                .connectionListener(connListener)
 	                .errorListener(errListener)
@@ -164,7 +164,7 @@ public class NatsPublish {
 	            PublishAck pa = js.publish(msg);
 	            System.out.printf("Published message %s on subject %s, stream %s, seqno %d, has error %s. \n",
 	                   data, subject, pa.getStream(), pa.getSeqno(), pa.hasError() ? "Yes" : "No");
-
+	            
 	            // TODO: Is this needed?
 	            nc.close();
 	        } catch (Exception e) {
