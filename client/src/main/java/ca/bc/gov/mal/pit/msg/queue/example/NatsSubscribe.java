@@ -12,9 +12,6 @@ import io.nats.client.NKey;
 import io.nats.client.Nats;
 import io.nats.client.Options;
 import io.nats.client.PullSubscribeOptions;
-import io.nats.client.ConnectionListener.Events;
-import io.nats.client.ErrorListener.FlowControlSource;
-import io.nats.client.api.ConsumerConfiguration;
 import io.nats.client.support.Status;
 
 import java.io.FileNotFoundException;
@@ -161,16 +158,10 @@ public class NatsSubscribe {
 	        try (Connection nc = Nats.connect(options)) {
 
 	            JetStream js = nc.jetStream();
-
-// TODO: Looks like this is not needed, since the consumer already exists and should not be modified.
-//	            ConsumerConfiguration cc = ConsumerConfiguration.builder()
-//	                    .ackWait(Duration.ofMillis(2500))
-//	                    .build();
 	            
 	            PullSubscribeOptions pullOptions = PullSubscribeOptions.builder()
 	                    .durable(consumer)
 	                    .stream(subject)
-//	                    .configuration(cc)  // TODO: Do we need this?
 	                    .bind(true)
 	                    .build();
 
@@ -198,20 +189,20 @@ public class NatsSubscribe {
                 		System.out.println("Status: " + msg.getStatus().toString());
                 	}
 
-                	boolean messageProcessed = true;
+                	boolean messageProcessed = true;  // Change to false to test nak.
                 	if (messageProcessed ) {
                 		msg.ack();
                 	} else {
                 		// Message cannot be processed at this time, so tell NATS to re-deliver this message, waiting at least X seconds.
-                		msg.nakWithDelay(Duration.ofSeconds(60));  // TODO: Change.
+                		System.out.println("Sending nak with delay");
+                		msg.nakWithDelay(Duration.ofSeconds(60));  // NATS server apparently does not support backoff for nak, only for ack timeout.
                 	}
                 } else {
                 	System.out.println("Nothing received");
                 }
 
-	            // TODO: Do we need these?
-	            sub.unsubscribe();
-	            nc.close();
+            	sub.unsubscribe();
+
 	        } catch (Exception e) {
 	                e.printStackTrace();
 	        }

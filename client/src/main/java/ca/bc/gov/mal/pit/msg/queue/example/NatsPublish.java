@@ -43,7 +43,7 @@ public class NatsPublish {
 				throw new IllegalArgumentException("Required property is missing");
 			}
 
-			String data = "Testing, testing, 10, 11, 12";
+			String data = "Testing, testing, 1, 2, 3";
 
 	        System.out.printf("\nPublishing to %s. Server is %s\n\n", subject, server);
 
@@ -165,8 +165,6 @@ public class NatsPublish {
 	            System.out.printf("Published message %s on subject %s, stream %s, seqno %d, has error %s. \n",
 	                   data, subject, pa.getStream(), pa.getSeqno(), pa.hasError() ? "Yes" : "No");
 	            
-	            // TODO: Is this needed?
-	            nc.close();
 	        } catch (Exception e) {
 	                e.printStackTrace();
 	        }
