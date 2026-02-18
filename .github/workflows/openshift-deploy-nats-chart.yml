@@ -1,0 +1,95 @@
+name: Openshift Deploy NATS Chart
+run-name: Deploy NATS Chart to ${{ inputs.ENVIRONMENT_NAME}}
+
+on:
+  workflow_dispatch:
+    inputs:
+      ENVIRONMENT_NAME:
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - dlvr
+          - test
+          - prod
+          - tools
+      NAMESPACE:
+        required: true
+        type: choice
+        options: 
+          - dbe2dd-dev
+          - dbe2dd-test
+          - dbe2dd-prod
+          - dbe2dd-tools
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.ENVIRONMENT_NAME }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: copy nats files
+        run: mkdir staging && cp -r server/nats-chart staging/nats-chart && cp -r server/deploy-tools staging/deploy-tools
+      
+      - name: Fill properties files
+        uses: cschleiden/replace-tokens@v1.3
+        with:
+          files: staging/deploy-tools/override-nats-values.yaml
+        env:
+          LICENSE_PLATE: 'dbe2dd'
+          ENV: ${{ inputs.ENVIRONMENT_NAME }}
+
+          MSG_QUEUE_REPLICAS: ${{ vars.MSG_QUEUE_REPLICAS }}
+          MSG_QUEUE_STORAGE: ${{ vars.MSG_QUEUE_STORAGE }}
+
+          MSG_QUEUE_MAX_CPU: ${{ vars.MSG_QUEUE_MAX_CPU }}
+          MSG_QUEUE_MAX_MEMORY: ${{ vars.MSG_QUEUE_MAX_MEMORY}}
+          MSG_QUEUE_GOMEMLIMIT: ${{ vars.MSG_QUEUE_GOMEMLIMIT}}
+
+          MSG_QUEUE_CLUSTER_USERNAME: ${{ vars.MSG_QUEUE_CLUSTER_USERNAME }}
+          MSG_QUEUE_CLUSTER_PASSWORD: ${{ secrets.MSG_QUEUE_CLUSTER_PASSWORD }}
+          
+          PIT_ADMIN_NKEY_PUBLIC: ${{ secrets.PIT_ADMIN_NKEY_PUBLIC }}
+          PIT_ADMIN_NKEY_SEED: ${{ secrets.PIT_ADMIN_NKEY_SEED }}
+
+          POLICIES_REST_NKEY_PUBLIC: ${{ secrets.POLICIES_REST_NKEY_PUBLIC }}
+          POLICIES_REST_NKEY_SEED: ${{ secrets.POLICIES_REST_NKEY_SEED }}
+
+          CLAIMS_SYNC_REST_NKEY_PUBLIC: ${{ secrets.CLAIMS_SYNC_REST_NKEY_PUBLIC }}
+          CLAIMS_SYNC_REST_NKEY_SEED: ${{ secrets.CLAIMS_SYNC_REST_NKEY_SEED }}
+
+          UNDERWRITING_SYNC_REST_NKEY_PUBLIC: ${{ secrets.UNDERWRITING_SYNC_REST_NKEY_PUBLIC }}
+          UNDERWRITING_SYNC_REST_NKEY_SEED: ${{ secrets.UNDERWRITING_SYNC_REST_NKEY_SEED }}
+
+          SYS_ADMIN_NKEY_PUBLIC: ${{ secrets.SYS_ADMIN_NKEY_PUBLIC }}          
+          SYS_ADMIN_NKEY_SEED: ${{ secrets.SYS_ADMIN_NKEY_SEED }}
+      
+      # Using Helm version 3. I tried Version 4, but the install fails without explanation.
+      - name: install helm
+        run: |
+          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+          chmod 700 get_helm.sh
+          ./get_helm.sh
+
+      #Explicit install of oc cli tool
+      - name: Install oc
+        uses: redhat-actions/oc-installer@v1
+
+      - name: Authenticate and set context
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{secrets.openshift_server_url}}
+          openshift_token: ${{secrets.openshift_token}}
+          namespace: ${{ inputs.NAMESPACE }}
+
+      - name: install or upgrade helm chart
+        run: |
+          cd staging
+          helm upgrade -i -f deploy-tools/override-nats-values.yaml nats-${{inputs.ENVIRONMENT_NAME}} ./nats-chart -n ${{inputs.NAMESPACE}}
