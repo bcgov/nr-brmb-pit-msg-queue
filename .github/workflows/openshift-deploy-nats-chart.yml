@@ -1,1 +1,8 @@
-# Empty action so that the real one can be run from an unmerged branch.
+name: Openshift Deploy NATS Chart
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
