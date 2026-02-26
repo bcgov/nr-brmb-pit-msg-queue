@@ -2,6 +2,7 @@
 
 # Create the Stream and Consumers in the PIT account.
 # Intended to be run as pit_admin.
+# Replace MSG_QUEUE_REPLICAS placeholder with the number of nats-server replicas.
 
 # Create stream.
 nats stream add --subjects="policies-event-channel" --storage=file --replicas=#{MSG_QUEUE_REPLICAS}# --retention=interest --discard=new --defaults policies-event-channel
