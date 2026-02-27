@@ -35,29 +35,29 @@ container:
   env:
     # Different from k8s units, suffix must be B, KiB, MiB, GiB, or TiB
     # Should be ~80% of memory limit
-    GOMEMLIMIT: 100MiB
+    GOMEMLIMIT: #{MSG_QUEUE_GOMEMLIMIT}#
 
   # NATS requires requests and limits to be the same. Failure to set either
   # results in the pod trying to use all the memory in the namespace, because
   # that is the default limit.
   resources:
     requests:
-      cpu: 50m
-      memory: 125Mi
+      cpu: #{MSG_QUEUE_MAX_CPU}#
+      memory: #{MSG_QUEUE_MAX_MEMORY}#
     limits:
-      cpu: 50m
-      memory: 125Mi
+      cpu: #{MSG_QUEUE_MAX_CPU}#
+      memory: #{MSG_QUEUE_MAX_MEMORY}#
 reloader:
   env:
-    GOMEMLIMIT: 100MiB
+    GOMEMLIMIT: #{MSG_QUEUE_GOMEMLIMIT}#
   merge:
     resources:
       requests:
-        cpu: 50m
-        memory: 125Mi
+        cpu: #{MSG_QUEUE_MAX_CPU}#
+        memory: #{MSG_QUEUE_MAX_MEMORY}#
       limits:
-        cpu: 50m
-        memory: 125Mi
+        cpu: #{MSG_QUEUE_MAX_CPU}#
+        memory: #{MSG_QUEUE_MAX_MEMORY}#
 podTemplate:
   topologySpreadConstraints:
     kubernetes.io/hostname:
