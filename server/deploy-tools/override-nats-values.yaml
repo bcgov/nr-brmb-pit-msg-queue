@@ -13,23 +13,26 @@ config:
       pvc:
         size: #{MSG_QUEUE_STORAGE}#
         storageClassName: netapp-block-standard
+  websocket:
+    enabled: true
+    port: 8080
   merge:
     accounts:
       PIT:
         jetstream: enabled
         users:
           # PIT_ADMIN
-          - {nkey: #{PIT_ADMIN_NKEY_PUBLIC}#}
+          - {nkey: #{PIT_ADMIN_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD"]}
           # POLICIES_REST
-          - {nkey: #{POLICIES_REST_NKEY_PUBLIC}#, permissions: {publish: policies-event-channel, subscribe: "_INBOX.>", allow_responses: true}}
+          - {nkey: #{POLICIES_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: policies-event-channel, subscribe: "_INBOX.>", allow_responses: true}}
           # CLAIMS_SYNC_REST
-          - {nkey: #{CLAIMS_SYNC_REST_NKEY_PUBLIC}#, permissions: {publish: ["$JS.API.CONSUMER.INFO.policies-event-channel.claims_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.policies-event-channel.claims_sync_rest_consumer"], subscribe: ["policies-event-channel", "_INBOX.>"], allow_responses: true}}
+          - {nkey: #{CLAIMS_SYNC_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: ["$JS.API.CONSUMER.INFO.policies-event-channel.claims_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.policies-event-channel.claims_sync_rest_consumer"], subscribe: ["policies-event-channel", "_INBOX.>"], allow_responses: true}}
           # UNDERWRITING_SYNC_REST
-          - {nkey: #{UNDERWRITING_SYNC_REST_NKEY_PUBLIC}#, permissions: {publish: ["$JS.API.CONSUMER.INFO.policies-event-channel.underwriting_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.policies-event-channel.underwriting_sync_rest_consumer"], subscribe: ["policies-event-channel", "_INBOX.>"], allow_responses: true}}
+          - {nkey: #{UNDERWRITING_SYNC_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: ["$JS.API.CONSUMER.INFO.policies-event-channel.underwriting_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.policies-event-channel.underwriting_sync_rest_consumer"], subscribe: ["policies-event-channel", "_INBOX.>"], allow_responses: true}}
       SYS_ADMIN:
         users:
           #SYS_ADMIN
-          - {nkey: #{SYS_ADMIN_NKEY_PUBLIC}#}
+          - {nkey: #{SYS_ADMIN_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD"]}
     system_account: SYS_ADMIN
 container:
   env:
