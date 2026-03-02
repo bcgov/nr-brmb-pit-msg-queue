@@ -48,6 +48,7 @@ jobs:
 
           MSG_QUEUE_REPLICAS: ${{ vars.MSG_QUEUE_REPLICAS }}
           MSG_QUEUE_STORAGE: ${{ vars.MSG_QUEUE_STORAGE }}
+          MSG_QUEUE_WS_PORT: ${{ vars.MSG_QUEUE_WS_PORT }}
 
           MSG_QUEUE_MAX_CPU: ${{ vars.MSG_QUEUE_MAX_CPU }}
           MSG_QUEUE_MAX_MEMORY: ${{ vars.MSG_QUEUE_MAX_MEMORY}}

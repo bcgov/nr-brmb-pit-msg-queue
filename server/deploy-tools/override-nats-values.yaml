@@ -15,7 +15,7 @@ config:
         storageClassName: netapp-block-standard
   websocket:
     enabled: true
-    port: 8080
+    port: #{MSG_QUEUE_WS_PORT}#
   merge:
     accounts:
       PIT:
