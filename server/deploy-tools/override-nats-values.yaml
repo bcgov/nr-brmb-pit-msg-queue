@@ -1,4 +1,4 @@
-# Initial values.yaml overrides for nats helm chart v2.12.2.
+# Initial values.yaml overrides for nats helm chart v2.12.6.
 
 config:
   cluster:
@@ -87,4 +87,4 @@ natsBox:
   container:
     # Had to override the default image, which tries to run as root but OpenShift does not allow.
     image:
-      tag: 0.19.2-nonroot
+      tag: 0.19.3-nonroot
