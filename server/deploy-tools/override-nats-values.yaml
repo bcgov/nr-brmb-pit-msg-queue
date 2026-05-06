@@ -26,9 +26,13 @@ config:
           # POLICIES_REST
           - {nkey: #{POLICIES_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: policies-event-channel, subscribe: "_INBOX.>", allow_responses: true}}
           # CLAIMS_SYNC_REST
-          - {nkey: #{CLAIMS_SYNC_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: ["$JS.API.CONSUMER.INFO.policies-event-channel.claims_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.policies-event-channel.claims_sync_rest_consumer"], subscribe: ["policies-event-channel", "_INBOX.>"], allow_responses: true}}
+          - {nkey: #{CLAIMS_SYNC_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: ["$JS.API.CONSUMER.INFO.policies-event-channel.claims_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.policies-event-channel.claims_sync_rest_consumer", $JS.API.CONSUMER.INFO.underwriting-event-channel.claims_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.underwriting-event-channel.claims_sync_rest_consumer",], subscribe: ["policies-event-channel", "_INBOX.>"], allow_responses: true}}
           # UNDERWRITING_SYNC_REST
-          - {nkey: #{UNDERWRITING_SYNC_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: ["$JS.API.CONSUMER.INFO.policies-event-channel.underwriting_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.policies-event-channel.underwriting_sync_rest_consumer"], subscribe: ["policies-event-channel", "_INBOX.>"], allow_responses: true}}
+          - {nkey: #{UNDERWRITING_SYNC_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: ["$JS.API.CONSUMER.INFO.policies-event-channel.underwriting_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.policies-event-channel.underwriting_sync_rest_consumer", "$JS.API.CONSUMER.INFO.claims-event-channel.underwriting_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.claims-event-channel.underwriting_sync_rest_consumer"], subscribe: ["policies-event-channel", "_INBOX.>"], allow_responses: true}}
+          # CLAIMS_REST
+          - {nkey: #{CLAIMS_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: claims-event-channel, subscribe: "_INBOX.>", allow_responses: true}}
+          # UNDERWRITING_REST
+          - {nkey: #{UNDERWRITING_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: underwriting-event-channel, subscribe: "_INBOX.>", allow_responses: true}}
       SYS_ADMIN:
         users:
           #SYS_ADMIN
@@ -81,6 +85,12 @@ natsBox:
     underwriting_sync_rest:
       nkey:
         contents: #{UNDERWRITING_SYNC_REST_NKEY_SEED}#
+    claims_rest:
+      nkey:
+        contents: #{CLAIMS_REST_NKEY_SEED}#
+    underwriting_rest:
+      nkey:
+        contents: #{UNDERWRITING_REST_NKEY_SEED}#
     sys_admin:
       nkey:
         contents: #{SYS_ADMIN_NKEY_SEED}#
