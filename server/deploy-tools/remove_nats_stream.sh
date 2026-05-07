@@ -5,4 +5,8 @@
 
 nats consumer rm policies-event-channel claims_sync_rest_consumer
 nats consumer rm policies-event-channel underwriting_sync_rest_consumer
+
+nats consumer rm claims-event-channel underwriting_sync_rest_consumer
+nats consumer rm underwriting-event-channel claims_sync_rest_consumer
+
 nats stream rm policies-event-channel
