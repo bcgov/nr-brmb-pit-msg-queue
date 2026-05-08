@@ -10,3 +10,7 @@ nats consumer rm claims-event-channel underwriting_sync_rest_consumer
 nats consumer rm underwriting-event-channel claims_sync_rest_consumer
 
 nats stream rm policies-event-channel
+
+nats stream rm claims-event-channel
+
+nats stream rm underwriting-event-channel
