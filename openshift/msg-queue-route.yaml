@@ -1,0 +1,16 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: msg-queue-route-#{ENV}#
+  namespace: #{NAMESPACE}#
+spec:
+  port:
+    targetPort: #{MSG_QUEUE_WS_PORT}#
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: nats-#{ENV}#
+    weight: 100
+  wildcardPolicy: None

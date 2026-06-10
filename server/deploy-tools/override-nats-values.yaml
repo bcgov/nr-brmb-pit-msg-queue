@@ -1,0 +1,90 @@
+# Initial values.yaml overrides for nats helm chart v2.12.6.
+
+config:
+  cluster:
+    enabled: true
+    replicas: #{MSG_QUEUE_REPLICAS}#
+    routeURLs:
+      user: #{MSG_QUEUE_CLUSTER_USERNAME}#
+      password: #{MSG_QUEUE_CLUSTER_PASSWORD}#
+  jetstream:
+    enabled: true
+    fileStore:
+      pvc:
+        size: #{MSG_QUEUE_STORAGE}#
+        storageClassName: netapp-block-standard
+  websocket:
+    enabled: true
+    port: #{MSG_QUEUE_WS_PORT}#
+  merge:
+    accounts:
+      PIT:
+        jetstream: enabled
+        users:
+          # PIT_ADMIN
+          - {nkey: #{PIT_ADMIN_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD"]}
+          # POLICIES_REST
+          - {nkey: #{POLICIES_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: policies-event-channel, subscribe: "_INBOX.>", allow_responses: true}}
+          # CLAIMS_SYNC_REST
+          - {nkey: #{CLAIMS_SYNC_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: ["$JS.API.CONSUMER.INFO.policies-event-channel.claims_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.policies-event-channel.claims_sync_rest_consumer"], subscribe: ["policies-event-channel", "_INBOX.>"], allow_responses: true}}
+          # UNDERWRITING_SYNC_REST
+          - {nkey: #{UNDERWRITING_SYNC_REST_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD", "WEBSOCKET"], permissions: {publish: ["$JS.API.CONSUMER.INFO.policies-event-channel.underwriting_sync_rest_consumer", "$JS.API.CONSUMER.MSG.NEXT.policies-event-channel.underwriting_sync_rest_consumer"], subscribe: ["policies-event-channel", "_INBOX.>"], allow_responses: true}}
+      SYS_ADMIN:
+        users:
+          #SYS_ADMIN
+          - {nkey: #{SYS_ADMIN_NKEY_PUBLIC}#, allowed_connection_types: ["STANDARD"]}
+    system_account: SYS_ADMIN
+container:
+  env:
+    # Different from k8s units, suffix must be B, KiB, MiB, GiB, or TiB
+    # Should be ~80% of memory limit
+    GOMEMLIMIT: #{MSG_QUEUE_GOMEMLIMIT}#
+
+  # NATS requires requests and limits to be the same. Failure to set either
+  # results in the pod trying to use all the memory in the namespace, because
+  # that is the default limit.
+  resources:
+    requests:
+      cpu: #{MSG_QUEUE_MAX_CPU}#
+      memory: #{MSG_QUEUE_MAX_MEMORY}#
+    limits:
+      cpu: #{MSG_QUEUE_MAX_CPU}#
+      memory: #{MSG_QUEUE_MAX_MEMORY}#
+reloader:
+  env:
+    GOMEMLIMIT: #{MSG_QUEUE_GOMEMLIMIT}#
+  merge:
+    resources:
+      requests:
+        cpu: #{MSG_QUEUE_MAX_CPU}#
+        memory: #{MSG_QUEUE_MAX_MEMORY}#
+      limits:
+        cpu: #{MSG_QUEUE_MAX_CPU}#
+        memory: #{MSG_QUEUE_MAX_MEMORY}#
+podTemplate:
+  topologySpreadConstraints:
+    kubernetes.io/hostname:
+      maxSkew: 1
+      whenUnsatisfiable: DoNotSchedule
+natsBox:
+  contexts:
+    # PIT_ADMIN
+    default:
+      nkey:
+        contents: #{PIT_ADMIN_NKEY_SEED}#
+    policies_rest:
+      nkey:
+        contents: #{POLICIES_REST_NKEY_SEED}#
+    claims_sync_rest:
+      nkey:
+        contents: #{CLAIMS_SYNC_REST_NKEY_SEED}#
+    underwriting_sync_rest:
+      nkey:
+        contents: #{UNDERWRITING_SYNC_REST_NKEY_SEED}#
+    sys_admin:
+      nkey:
+        contents: #{SYS_ADMIN_NKEY_SEED}#
+  container:
+    # Had to override the default image, which tries to run as root but OpenShift does not allow.
+    image:
+      tag: 0.19.3-nonroot
